@@ -1,0 +1,9 @@
+NumericalSemigroups
+Copyright 2026 Artur Flamandzki
+
+Licensed under the Apache License, Version 2.0 (see the LICENSE file).
+
+The Lean formalization in lean/ depends on Mathlib
+(https://github.com/leanprover-community/mathlib4), which is licensed under the
+Apache License, Version 2.0. All files in lean/LinearQ/ are original to this
+development and use Mathlib only as a library.
