@@ -1,0 +1,30 @@
+# Lake / Lean build artifacts
+/lean/.lake/
+/lean/build.log
+*.olean
+*.ilean
+*.trace
+
+# Python
+__pycache__/
+*.pyc
+
+# LaTeX build intermediates (sources and final PDFs are kept)
+Latex/*.aux
+Latex/*.log
+Latex/*.out
+Latex/*.bbl
+Latex/*.bcf
+Latex/*.blg
+Latex/*.run.xml
+Latex/*.synctex.gz
+Latex/*.toc
+Latex/*.fls
+Latex/*.fdb_latexmk
+
+# Editor / OS
+.DS_Store
+*.swp
+.vscode/
+.idea/
+*.code-workspace

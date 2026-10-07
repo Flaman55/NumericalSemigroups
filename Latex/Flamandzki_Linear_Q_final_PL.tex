@@ -1,0 +1,635 @@
+\documentclass[11pt,a4paper]{amsart}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[polish]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage[section]{placeins}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{csquotes}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Twierdzenie}[section]
+\newtheorem{lemma}[theorem]{Lemat}
+\newtheorem{corollary}[theorem]{Wniosek}
+\newtheorem{conjecture}[theorem]{Hipoteza}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definicja}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Uwaga}
+
+\usepackage[
+    backend=biber,
+    style=numeric,
+    sorting=none
+]{biblatex}
+\addbibresource{bibliography.bib}
+
+\geometry{margin=2.8cm}
+
+\title{Liniowy algorytm formy kwadratowej Huanga\\
+na półgrupach numerycznych i asymptotyka gęstości}
+
+\author{Artur Flamandzki}
+\thanks{Adres e-mail: \texttt{flamandzki.artur@gmail.com}.}
+
+\date{\today}
+
+\begin{document}
+
+\begin{abstract}
+Niech $G = \mathbb{N} \setminus \langle a, b \rangle$ będzie zbiorem luk
+półgrupy numerycznej dla wzajemnie pierwszych $a < b$, oraz $N = |G|$.
+Huang~\cite{Huang2026} zdefiniował formę kwadratową
+$Q(\mathbf{n}) = \sum_{i,j} K(j-i)\,n_i n_j$ na $\mathbb{R}^G$, gdzie
+$K(d) = \mathbf{1}_{d \geq 0} - \mathbf{1}_{d \geq a} - \mathbf{1}_{d \geq b}
++ \mathbf{1}_{d \geq a+b}$, i wykazał, że odtwarza ona statystykę
+$\mathrm{dinv}$ na wymiernych ścieżkach Dycka.
+Naiwne obliczenie $Q$ wymaga $O(N^2)$ operacji.
+
+Dowodzimy, że przedziałowa struktura $K$ pozwala zredukować $Q$ do
+liniowej kombinacji sum z przesuwnym oknem, dając algorytm czasu $O(N)$
+(Twierdzenie~\ref{thm:linear}). Uogólniamy na półgrupy
+$\langle p_1,\ldots,p_n \rangle$ o $n$ generatorach, gdzie uogólnione
+jądro $K^{(n)}$ zdefiniowane zasadą włączeń--wyłączeń
+--- o $2^n$ składnikach --- posiada co najwyżej $w(n) \leq \sigma_n$
+okien aktywnych wskutek kasowania parzystościowego;
+są one obliczalne inkrementalnie w czasie $O(n \cdot \sigma_n)$
+(Twierdzenie~\ref{thm:general}).
+Empirycznie $w(n) \sim \sigma_n$ przy $w(n) \ll 2^n$:
+wykładnicza kombinatoryka redukuje się do liniowej struktury okien.
+Dla ciągu parami różnych liczb całkowitych $p_i \geq 2$ spełniającego
+$\log p_n = o(n)$ dowodzimy
+\[
+  \frac{w(n)}{2^n - 1} \;=\; o\!\left(\,\prod_{i=1}^{n}
+    \Bigl(1 - \tfrac{1}{p_i}\Bigr)\right), \qquad n \to \infty
+\]
+(Twierdzenie~\ref{thm:density}).
+\end{abstract}
+
+\maketitle
+
+% ==================================================
+\section{Wprowadzenie}
+\label{sec:intro}
+% ==================================================
+
+\subsection*{1.1. Kontekst i motywacja}
+
+Niech $a, b \in \mathbb{N}$, $\gcd(a,b) = 1$, $a < b$.
+Półgrupa numeryczna generowana przez $a$ i $b$ to
+$\langle a, b \rangle = \{ xa + yb : x, y \in \mathbb{Z}_{\geq 0} \}$.
+Na mocy twierdzenia Sylvestera--Frobeniusa zbiór luk
+$G = \mathbb{N} \setminus \langle a, b \rangle$ jest skończony,
+$|G| = N = \tfrac{(a-1)(b-1)}{2}$.
+Piszemy $G = \{g_0 < g_1 < \cdots < g_{N-1}\}$.
+
+Huang~\cite{Huang2026} zdefiniował na $\mathbb{R}^G$ formę kwadratową
+\[
+  Q(\mathbf{n}) = \sum_{i,j \in G} K(j - i)\, n_i n_j,
+  \qquad
+  K(d) = \mathbf{1}_{d \geq 0} - \mathbf{1}_{d \geq a}
+         - \mathbf{1}_{d \geq b} + \mathbf{1}_{d \geq a+b},
+\]
+i wykazał, że gdy $\mathbf{n} = \mathbf{1}_D$ jest wektorem wskaźnikowym
+poddiagramu Younga $D \subseteq G$, to $Q(\mathbf{1}_D) = \mathrm{dinv}(D)$,
+gdzie $\mathrm{dinv}$ jest statystyką Gorsky'ego--Mazina na wymiernych
+ścieżkach Dycka. Niezależna formalna weryfikacja tego twierdzenia
+w systemie Lean~4/Mathlib: \cite{AxiomProver2026}.
+
+Praca~\cite{Huang2026} oraz jej formalizacja~\cite{AxiomProver2026}
+dotyczą tożsamości $Q(\mathbf{1}_D) = \mathrm{dinv}(D)$.
+Niniejsza praca dotyczy efektywności obliczeniowej formy $Q$
+i jej uogólnienia na $n$ generatorów.
+
+Bezpośrednia ewaluacja $Q$ ze wzoru definicyjnego wymaga
+$N^2$ operacji. Kluczową obserwacją jest, że $K$ przyjmuje
+co najwyżej trzy wartości niezerowe na pięciu rozłącznych
+przedziałach (Lemat~\ref{lem:K-intervals}), co redukuje
+obliczenie $Q$ do dwóch sum z przesuwnym oknem, dając
+algorytm $O(N)$.
+
+Generalizacja na $n$ generatorów definiuje jądro $K^{(n)}$
+zasadą włączeń--wyłączeń po wszystkich $2^n$ podzbiorach
+$\{p_1, \ldots, p_n\}$. Struktura przedziałowa $K^{(n)}$
+zachowuje się, lecz liczba okien aktywnych $w(n)$
+--- interwałów, na których $K^{(n)} \neq 0$ ---
+jest znacznie mniejsza niż $2^n$ wskutek kasowania
+parzystościowego. Udowadniamy $w(n) \leq \sigma_n$
+i podajemy algorytm inkrementalny obliczający $w(n)$
+i same okna aktywne.
+
+Stosunek $w(n)/(2^n - 1)$ ma naturalne powiązanie z iloczynem
+$P(n) = \prod_{i=1}^n (1 - 1/p_i)$: przy warunku
+$\log p_n = o(n)$ wykazujemy $w(n)/(2^n-1) = o(P(n))$,
+tj.\ gęstość okien aktywnych jest asymptotycznie zaniedbywalnie
+mała względem $P(n)$.
+
+Uogólnienie na $n$ generatorów nie dotyczy problemu Frobeniusa,
+który pyta o wzór jawny na największy element
+$\mathbb{Z}_{\geq 0} \setminus \langle p_1,\ldots,p_n \rangle$
+i pozostaje otwarty dla $n \geq 3$~\cite{Ramirez2005}.
+Jądro $K^{(n)}$ jest zdefiniowane przez zasadę włączeń--wyłączeń
+nad zbiorem generatorów; algorytm przyjmuje $G$ jako wejście.
+
+\subsection*{1.2. Definicje i główne wyniki}
+
+\textbf{Dwa generatory.}
+Dla ustalonego $k$ i $\mathbf{n} = (n_j)_{j \in G} \in \mathbb{R}^G$
+definiujemy sumy okienkowe
+\begin{align*}
+  W^+_k &:= \sum_{\substack{j \in G \\ g_k \leq g_j < g_k + a}} n_j, \qquad
+  W^-_k := \sum_{\substack{j \in G \\ g_k + b \leq g_j < g_k + a + b}} n_j.
+\end{align*}
+
+\begin{theorem}[Algorytm liniowy, dwa generatory]
+\label{thm:linear}
+Dla każdego $\mathbf{n} \in \mathbb{R}^G$,
+\[
+  Q(\mathbf{n}) = \sum_{k=0}^{N-1} n_k \bigl(W^+_k - W^-_k\bigr).
+\]
+Obie rodziny $(W^+_k)$ i $(W^-_k)$ są obliczalne łącznie
+w czasie $O(N)$ i pamięci $O(N)$ za pomocą czterech
+wskaźników przesuwnego okna na $G$.
+\end{theorem}
+
+Twierdzenie~\ref{thm:linear} redukuje koszt z $O(N^2)$ do $O(N)$.
+Ponieważ $N = \tfrac{(a-1)(b-1)}{2}$, algorytm działa w czasie
+$O(ab)$ wobec $O(a^2 b^2)$ dla naiwnego.
+
+\textbf{Wiele generatorów.}
+Niech $\mathbf{p} = (p_1, \ldots, p_n)$, $p_i \geq 2$ parami różne,
+$\gcd(p_1,\ldots,p_n) = 1$, $\sigma_n = \sum_{i=1}^n p_i$.
+Uogólnione jądro
+\[
+  K^{(n)}(d) := \sum_{S \subseteq \{p_1,\ldots,p_n\}} (-1)^{|S|}
+               \mathbf{1}_{d \geq \sigma(S)}, \qquad
+  \sigma(S) = \sum_{p \in S} p, \quad \sigma(\emptyset) = 0,
+\]
+jest niezerowe co najwyżej na $w(n)$ przedziałach między kolejnymi
+punktami podziału; piszemy $w(n)$ na liczbę tych okien aktywnych.
+
+\begin{theorem}[Algorytm z przesuwnym oknem, $n$ generatorów]
+\label{thm:general}
+Niech $G = \mathbb{N} \setminus \langle p_1,\ldots,p_n \rangle$.
+Forma $Q(\mathbf{n}) = \sum_{i,j \in G} K^{(n)}(j-i)\,n_i n_j$
+jest obliczalna w czasie $O(T_{\mathrm{prep}} + w(n) \cdot N)$, gdzie
+$T_{\mathrm{prep}} = O(n \cdot \sigma_n)$.
+Zachodzi $w(n) \leq \sigma_n$.
+Zbiór okien aktywnych i wartości $K^{(n)}$ na nich są obliczalne
+inkrementalnie: przejście od $n-1$ do $n$ generatorów kosztuje
+$O(\sigma_{n-1})$.
+\end{theorem}
+
+\textbf{Asymptotyka gęstości.}
+Dla ciągu parami różnych liczb całkowitych $p_i \geq 2$
+definiujemy iloczyn gęstości i deficyt gęstości:
+\[
+  P(n) := \prod_{i=1}^{n} \!\left(1 - \frac{1}{p_i}\right), \qquad
+  \delta(n) := P(n) - \frac{w(n)}{2^n - 1}.
+\]
+
+\begin{remark}
+\label{rem:terminology}
+Termin \emph{luka} oznacza wyłącznie element
+$G = \mathbb{N} \setminus \langle p_1,\ldots,p_n \rangle$.
+Symbol $\delta(n)$ oznacza wyłącznie wielkość $P(n) - w(n)/(2^n-1)$.
+Oba pojęcia są niezależne.
+\end{remark}
+
+\begin{remark}
+\label{rem:mertens}
+Iloczyn $P(n) = \prod_{i=1}^n (1 - 1/p_i)$ jest zdefiniowany
+dla dowolnego ciągu parami różnych liczb całkowitych $p_i \geq 2$
+i nie wymaga, by $p_i$ były liczbami pierwszymi.
+Gdy $p_i$ są kolejnymi liczbami pierwszymi, $P(n)$ pokrywa się
+z klasycznym iloczynem Mertensa; w tym przypadku $P(n) \to 0$.
+\end{remark}
+
+\begin{theorem}[Asymptotyka gęstości]
+\label{thm:density}
+Niech $(p_i)_{i \geq 1}$ będzie ciągiem parami różnych
+liczb całkowitych $\geq 2$ spełniającym $\log p_n = o(n)$.
+Wówczas
+\[
+  \frac{w(n)}{2^n - 1} = o(P(n)), \qquad n \to \infty,
+\]
+równoważnie: $\delta(n)/P(n) \to 1$.
+\end{theorem}
+
+Warunek $\log p_n = o(n)$ jest spełniony przez każdą rodzinę
+generatorów pierwszych ($p_n \sim n \log n$), liczby pierwsze
+bliźniacze, postępy arytmetyczne liczb pierwszych oraz ciągi
+losowych liczb nieparzystych o gęstości pierwszej.
+
+% ==================================================
+\section{Preliminaria}
+\label{sec:prelim}
+% ==================================================
+
+\subsection*{Jądro dwugeneratorowe}
+
+\begin{lemma}[Struktura przedziałowa $K$]
+\label{lem:K-intervals}
+Dla wszystkich $d \in \mathbb{Z}$:
+\[
+  K(d) =
+  \begin{cases}
+     0  & d < 0,            \\
+    +1  & 0 \leq d < a,     \\
+     0  & a \leq d < b,     \\
+    -1  & b \leq d < a+b,   \\
+     0  & d \geq a+b.
+  \end{cases}
+\]
+\end{lemma}
+
+\begin{proof}
+Bezpośrednie zestawienie czterech wskaźników $\mathbf{1}_{d \geq 0}$,
+$-\mathbf{1}_{d \geq a}$, $-\mathbf{1}_{d \geq b}$,
+$+\mathbf{1}_{d \geq a+b}$ przy $a < b$.
+Pięć przypadków jest wzajemnie wykluczające się i wyczerpujące.
+\end{proof}
+
+\begin{corollary}
+\label{cor:support}
+$K(d) \neq 0$ implikuje $0 \leq d < a+b$.
+Suma $\sum_{d \in \mathbb{Z}} K(d) = a - (b - a) = 2a - b$.
+\end{corollary}
+
+\subsection*{Jądro wielogeneratorowe}
+
+\begin{definition}[Funkcja parytetu]
+\label{def:parity}
+Dla $\mathbf{p} = (p_1,\ldots,p_n)$ i $s \in \mathbb{Z}_{\geq 0}$:
+\[
+  \pi_n(s) := \sum_{\substack{S \subseteq \{p_1,\ldots,p_n\} \\
+                              \sigma(S) = s}} (-1)^{|S|}.
+\]
+Zachodzi $K^{(n)}(d) = \sum_{s \leq d} \pi_n(s)$,
+a zatem $K^{(n)}$ jest stałe na przedziałach między kolejnymi
+$s$ z $\pi_n(s) \neq 0$.
+\end{definition}
+
+\begin{lemma}[Znikanie poza $[0, \sigma_n)$]
+\label{lem:K-vanish}
+$K^{(n)}(d) = 0$ dla $d < 0$ oraz dla $d \geq \sigma_n$.
+\end{lemma}
+
+\begin{proof}
+Dla $d < 0$: każdy wskaźnik $\mathbf{1}_{d \geq \sigma(S)} = 0$.
+Dla $d \geq \sigma_n$: wszystkie wskaźniki równe $1$, i
+$\sum_{S \subseteq \{p_1,\ldots,p_n\}} (-1)^{|S|} = (1-1)^n = 0$
+na mocy wzoru dwumianowego.
+\end{proof}
+
+\begin{lemma}[Rekurencja parytetowa]
+\label{lem:parity-recurrence}
+\[
+  \pi_{n+1}(s) = \pi_n(s) - \pi_n(s - p_{n+1}).
+\]
+\end{lemma}
+
+\begin{proof}
+Podzbiory $\{p_1,\ldots,p_{n+1}\}$ o sumie $s$ dzielą się na:
+podzbiory $S \subseteq \{p_1,\ldots,p_n\}$ z $\sigma(S) = s$,
+wnoszące $\pi_n(s)$, oraz podzbiory $S \cup \{p_{n+1}\}$
+z $\sigma(S) = s - p_{n+1}$, wnoszące $-\pi_n(s - p_{n+1})$.
+\end{proof}
+
+% ==================================================
+\section{Dowód Twierdzenia~\ref{thm:linear}}
+\label{sec:proof-linear}
+% ==================================================
+
+\subsection*{3.1. Redukcja formy kwadratowej}
+
+\begin{lemma}
+\label{lem:inner-sum}
+Dla ustalonego $i \in G$:
+\[
+  \sum_{j \in G} K(j - i)\, n_j = W^+_i - W^-_i.
+\]
+\end{lemma}
+
+\begin{proof}
+Z Lematu~\ref{lem:K-intervals}: $K(j - i) = +1$ gdy
+$g_i \leq g_j < g_i + a$, $K(j-i) = -1$ gdy
+$g_i + b \leq g_j < g_i + a + b$, i $K(j-i) = 0$ w pozostałych
+przypadkach. Definicje $W^+_i$ i $W^-_i$ odpowiadają dokładnie
+tym dwóm przedziałom.
+\end{proof}
+
+\begin{proof}[Dowód Twierdzenia~\ref{thm:linear}]
+Przestawiając sumę:
+\[
+  Q(\mathbf{n}) = \sum_{i \in G} n_i \sum_{j \in G} K(j-i)\,n_j
+  = \sum_{i \in G} n_i (W^+_i - W^-_i),
+\]
+gdzie pierwsza równość wynika z symetrii (zamiana indeksów),
+a druga z Lematu~\ref{lem:inner-sum}.
+
+Liniowość: utrzymujemy cztery wskaźniki
+$\mathrm{lo}^+, \mathrm{hi}^+, \mathrm{lo}^-, \mathrm{hi}^-$
+do posortowanego $G$, zainicjalizowane na $0$.
+Dla $k = 0, 1, \ldots, N-1$:
+przesuwamy $\mathrm{hi}^+$ dopóki $g_{\mathrm{hi}^+} < g_k + a$;
+przesuwamy $\mathrm{lo}^+$ dopóki $g_{\mathrm{lo}^+} < g_k$;
+przesuwamy $\mathrm{hi}^-$ dopóki $g_{\mathrm{hi}^-} < g_k + a + b$;
+przesuwamy $\mathrm{lo}^-$ dopóki $g_{\mathrm{lo}^-} < g_k + b$.
+Każdy wskaźnik jest niemalejący i przekracza $G$ co najwyżej raz:
+łącznie $\leq 4N$ aktualizacji.
+\end{proof}
+
+\begin{corollary}
+\label{cor:speedup}
+Dla $(a, b) = (97, 101)$, $N = 4801$: algorytm $O(N)$ wykonuje
+$19\,204$ operacji wobec $23\,049\,601$ dla $O(N^2)$;
+stosunek $\approx 1200$.
+Ogólnie $N^2 / (4N) = N/4 = (a-1)(b-1)/8$.
+\end{corollary}
+
+% ==================================================
+\section{Dowód Twierdzenia~\ref{thm:general}}
+\label{sec:proof-general}
+% ==================================================
+
+\subsection*{4.1. Okna aktywne i ograniczenie $w(n) \leq \sigma_n$}
+
+\begin{definition}[Okno aktywne]
+\label{def:active}
+Przedział $[s, s')$ między kolejnymi punktami podziału $K^{(n)}$
+jest \emph{aktywny}, jeśli $K^{(n)} \neq 0$ na $(s, s')$.
+$w(n)$ oznacza liczbę okien aktywnych.
+\end{definition}
+
+\begin{lemma}
+\label{lem:w-bound}
+$w(n) \leq \sigma_n$.
+\end{lemma}
+
+\begin{proof}
+Z Lematu~\ref{lem:K-vanish} nośnik $K^{(n)}$ zawiera się
+w $[0, \sigma_n) \cap \mathbb{Z}$, który zawiera $\sigma_n$
+liczb całkowitych. Liczba okien aktywnych nie przekracza
+liczby punktów podziału, co jest co najwyżej $\sigma_n$.
+\end{proof}
+
+\begin{lemma}[Kasowanie parzystościowe]
+\label{lem:cancel}
+Jeśli $\pi_n(s) = 0$, to punkt $s$ nie jest punktem podziału
+$K^{(n)}$, co zmniejsza $w(n)$ poniżej $\sigma_n$.
+Efekt ten zachodzi, gdy istnieją $S_1 \neq S_2$ z
+$\sigma(S_1) = \sigma(S_2) = s$ i $|S_1| \not\equiv |S_2| \pmod{2}$.
+\end{lemma}
+
+\begin{proof}
+Z definicji $\pi_n$: wkłady z przeciwną parzystością anulują się.
+\end{proof}
+
+\begin{remark}
+\label{rem:cancellation-empirical}
+Współczynnik nadmiarowości
+$1 - w(n)/\sigma_n$ wzrasta od $0{,}0\%$ przy $n=2$
+do $100{,}0\%$ przy $n \geq 21$ dla ciągu pierwszych liczb
+pierwszych (Tabela~\ref{tab:mertens};
+wartości $100{,}0\%$ wynikają z zaokrąglenia
+do jednego miejsca dziesiętnego).
+Kombinatoryczny dowód nierówności $w(n) < 2^n - 1$
+dla każdego $n \geq 3$ pozostaje otwarty
+(Sekcja~\ref{sec:open}, punkt~(i)).
+\end{remark}
+
+\subsection*{4.2. Algorytm inkrementalny}
+
+\begin{lemma}[Aktualizacja okna]
+\label{lem:incremental}
+Zbiór okien aktywnych dla $n+1$ generatorów wyznaczają
+nowe punkty podziału wynikające z $\pi_{n+1}(s) = \pi_n(s) - \pi_n(s - p_{n+1})$
+(Lemat~\ref{lem:parity-recurrence}).
+Przejście od $n$ do $n+1$ generatorów kosztuje $O(\sigma_n)$.
+\end{lemma}
+
+\begin{proof}
+Nośnik $\pi_n$ zawiera się w $[0, \sigma_n]$, więc
+aktualizacja $\pi_{n+1}(s) = \pi_n(s) - \pi_n(s - p_{n+1})$
+wymaga co najwyżej $\sigma_n + 1$ operacji.
+\end{proof}
+
+\begin{proof}[Dowód Twierdzenia~\ref{thm:general}]
+Wyznaczamy $\mathcal{W}$ --- zbiór par $(lo, hi, c)$ reprezentujących
+okna aktywne z wartościami $K^{(n)}$ --- algorytmem inkrementalnym:
+zaczynamy od $n = 1$ (jedno okno $[0, p_1)$ z wartością $+1$)
+i wykonujemy $n-1$ kroków z Lematu~\ref{lem:incremental}.
+Całkowity koszt: $\sum_{k=1}^{n-1} O(\sigma_k) = O(n \cdot \sigma_n)$.
+
+Następnie dla każdego okna $(lo, hi, c) \in \mathcal{W}$
+wykonujemy jeden przebieg przesuwnego okna po $G$ w czasie $O(N)$:
+akumulujemy $c \cdot \sum_{j \in G \cap [lo, hi)} n_j$.
+Łączny koszt: $O(T_{\mathrm{prep}} + w(n) \cdot N)$.
+\end{proof}
+
+\begin{remark}
+\label{rem:activation}
+Zmiana $K^{(n)}$ przy dodaniu generatora $p_{n+1}$ ma postać
+\[
+  K^{(n+1)}(d) - K^{(n)}(d) =
+  \sum_{\substack{S \subseteq \{p_1,\ldots,p_n\} \\ \sigma(S)+p_{n+1} \leq d}}
+  (-1)^{|S|+1}.
+\]
+Pozycja nieaktywna pod $K^{(n)}$ staje się aktywna pod $K^{(n+1)}$
+wtedy i tylko wtedy, gdy ta suma jest niezerowa.
+Empirycznie $K^{(n)}(d) \notin \{-1, 0, 1\}$ jest możliwe;
+wartości $\pm 3$ obserwowane przy $n = 12$
+(Tabela~\ref{tab:positions}).
+\end{remark}
+
+% ==================================================
+\section{Dowód Twierdzenia~\ref{thm:density}}
+\label{sec:proof-density}
+% ==================================================
+
+\begin{proof}[Dowód Twierdzenia~\ref{thm:density}]
+Dowodzimy, że $w(n)/((2^n-1) P(n)) \to 0$.
+
+\textbf{Krok 1.}
+Z Lematu~\ref{lem:w-bound}: $w(n) \leq \sigma_n \leq n\,p_n$.
+
+\textbf{Krok 2.}
+Ponieważ $p_1 < p_2 < \cdots < p_n$ są parami różne i $\geq 2$,
+to $p_k \geq k+1$ dla każdego $k$, skąd
+\[
+  H_n := \sum_{k=1}^n \frac{1}{p_k} \leq \sum_{j=2}^{n+1} \frac{1}{j} \leq \log(n+1).
+\]
+Z nierówności $\log(1-x) \geq -2x$ dla $x \in [0, 1/2]$:
+\[
+  \log P(n) = \sum_{k=1}^n \log\!\Bigl(1 - \tfrac{1}{p_k}\Bigr)
+  \geq -2H_n \geq -2\log(n+1),
+\]
+skąd $P(n) \geq (n+1)^{-2}$.
+
+\textbf{Krok 3.}
+Z Kroków 1--2 i $2^n - 1 \geq 2^{n-1}$:
+\[
+  \frac{w(n)}{(2^n-1)\,P(n)} \leq \frac{2\,n\,p_n\,(n+1)^2}{2^n}.
+\]
+
+\textbf{Krok 4.}
+Z założenia $\log p_n = o(n)$:
+\[
+  \log\frac{p_n}{2^n} = \log p_n - n\log 2 = o(n) - n\log 2 \to -\infty,
+\]
+więc $p_n / 2^n \to 0$, a czynnik $2n(n+1)^2$ rośnie wielomianowo.
+Zatem wyrażenie z Kroku~3 dąży do $0$:
+czynnik $p_n/2^n = e^{\log p_n - n\log 2} \to 0$
+(bo $\log p_n - n\log 2 = o(n) - n\log 2 \to -\infty$),
+a wielomian $2n(n+1)^2$ rośnie wolniej niż $2^n/p_n \to \infty$.
+Jest to równoważne $\delta(n)/P(n) \to 1$.
+\end{proof}
+
+\begin{remark}
+\label{rem:density-empirical}
+Dla $n \geq 25$ w Tabeli~\ref{tab:mertens}:
+$w(n)/(2^n-1) < 10^{-4}$, tzn.\ $w(n)/(2^n-1)$ jest
+nierozróżnialne od zera w precyzji czterech miejsc dziesiętnych
+$P(n)$ we wszystkich ośmiu testowanych rodzinach ciągów generatorów.
+\end{remark}
+
+% ==================================================
+\section{Problemy otwarte}
+\label{sec:open}
+% ==================================================
+
+\begin{enumerate}[(i)]
+
+\item \textbf{Ograniczoność $|K^{(n)}(d)|$.}
+Czy $\sup_{n,d} |K^{(n)}(d)| < \infty$?
+Empirycznie $|K^{(n)}(d)| \leq 3$ dla $n \leq 12$
+(Tabela~\ref{tab:positions}).
+
+\item \textbf{Stabilność wartości.}
+Czy dla każdego ustalonego $d$ istnieje $n_0 = n_0(d)$ takie,
+że $K^{(n)}(d) = K^{(n_0)}(d)$ dla wszystkich $n \geq n_0$?
+
+\item \textbf{Ostra nierówność $w(n) < 2^n - 1$.}
+Twierdzenie~\ref{thm:density} dowodzi $w(n)/(2^n-1) \to 0$,
+lecz nie daje ostrego ograniczenia.
+Czy $w(n) < 2^n - 1$ dla każdego $n \geq 3$
+i dowolnego ciągu wzajemnie pierwszych generatorów?
+
+\item \textbf{Charakteryzacja $n^*$.}
+Niech $n^* = \min\{n : \delta(n) > 0\}$.
+Twierdzenie~\ref{thm:density} dowodzi $\delta(n)/P(n) \to 1$,
+lecz nie charakteryzuje $n^*$.
+Hipoteza~\ref{conj:harmonic} sugeruje, że $n^*$ zależy wyłącznie
+od sumy harmonicznej $H_n$.
+
+\item \textbf{Monotoniczne zachowanie $\delta(n)$.}
+Empirycznie $\delta(n)$ osiąga maksimum przy $n = 16$
+i następnie maleje (Tabela~\ref{tab:mertens}).
+Czy $\delta(n)$ osiąga właściwe maksimum przy skończonym $n$?
+
+\item \textbf{Struktura $\Delta w(n)$.}
+Od $n = 19$: przyrosty $\Delta w(n) = w(n) - w(n-1)$
+układają się w dwa rosnące ciągi według parzystości $n$.
+Jaki jest mechanizm arytmetyczny tego podziału?
+
+\item \textbf{Asymptotyka $\Delta w(n)$.}
+Czy $\Delta w(n) / p_n \to 1$ dla ciągów z $p_n \to \infty$?
+Dane numeryczne: $p_{300} = 1987$, $\Delta w(300) = 1986$
+(ciąg bazowy); $p_{300} = 2153$, $\Delta w(300) = 2153$
+(ciąg od $101$). Zbieżność $\Delta w(n) \sim p_n$ pociągałaby
+$w(n) \sim \sigma_n$.
+
+\end{enumerate}
+
+\begin{conjecture}
+\label{conj:harmonic}
+Niech $n^* = \min\{n : \delta(n) > 0\}$.
+Wartość $n^*$ zależy wyłącznie od sumy harmonicznej
+$H_n = \sum_{k=1}^n 1/p_k$: ciągi o tej samej $H_n$
+co pierwsze $n$ liczb pierwszych mają ten sam $n^*$,
+niezależnie od arytmetycznej natury generatorów.
+\end{conjecture}
+
+Hipoteza jest potwierdzona eksperymentalnie
+(Tabela~\ref{tab:sequences}).
+Formalny dowód wymaga charakteryzacji $n^*$
+opisanej w problemie~(iv).
+
+\medskip
+\textbf{Powiązana literatura.}
+Kasowanie parzystościowe we włączeniach--wyłączeniach
+pojawia się w niezwiązanych kontekstach:
+w teorii wielomianów chromatycznych
+(Whitney~\cite{Whitney1932}; Chen i Qian~\cite{ChenQian2018})
+oraz w teorii sit analitycznych
+(Tao~\cite{Tao2007}).
+Rzadkość przedziałowa $K^{(n)}$ i kasowanie
+parzystościowe dla jąder półgrup numerycznych
+nie były, według naszej wiedzy, wcześniej opisane.
+
+% ==================================================
+\section{Wnioski}
+\label{sec:conclusion}
+% ==================================================
+
+Punktem wyjścia była obserwacja Huanga~\cite{Huang2026}:
+forma kwadratowa $Q$ na zbiorze luk półgrupy numerycznej
+$\langle a, b \rangle$ odtwarza statystykę kombinatoryczną $\mathrm{dinv}$.
+Niniejsza praca odpowiada na pytanie o efektywność obliczeniową $Q$
+i ujawnia przy tym strukturę, która nie była wcześniej opisana.
+
+\textbf{Redukcja złożoności.}
+Przedziałowa budowa jądra $K$ (Lemat~\ref{lem:K-intervals})
+pozwala zastąpić podwójną sumę $O(N^2)$ przez dwa przebiegi
+przesuwnego okna w czasie $O(N)$ (Twierdzenie~\ref{thm:linear}).
+Przy $n$ generatorach jądro $K^{(n)}$ jest zdefiniowane przez
+$2^n$ składników zasady włączeń--wyłączeń, lecz wskutek kasowania parzystościowego posiada co najwyżej
+$w(n) \leq \sigma_n$ okien aktywnych (Twierdzenie~\ref{thm:general}).
+Empirycznie $w(n) \sim \sigma_n$, podczas gdy $w(n) \ll 2^n$:
+wykładnicza kombinatoryka redukuje się do rzadkiej struktury
+przedziałowej, a algorytm inkrementalny wyznacza tę strukturę
+w czasie $O(n \cdot \sigma_n)$.
+
+\textbf{Asymptotyka.}
+Twierdzenie~\ref{thm:density} formalizuje to zjawisko ilościowo:
+przy warunku subeksponencjalnym $\log p_n = o(n)$ zachodzi
+\[
+  \frac{w(n)}{2^n - 1} = o\!\left(\prod_{i=1}^n
+    \Bigl(1 - \frac{1}{p_i}\Bigr)\right), \qquad n \to \infty.
+\]
+Gęstość okien aktywnych jest asymptotycznie zaniedbywalnie mała
+względem iloczynu gęstości $P(n)$; równoważnie $\delta(n)/P(n) \to 1$.
+Dane numeryczne (Tabela~\ref{tab:mertens}) potwierdzają zbieżność
+przy $n \leq 30$ i wskazują na maksimum $\delta(n)$ przy $n = 16$,
+którego kombinatoryczna charakteryzacja pozostaje otwarta.
+
+\textbf{Perspektywy.}
+Kasowanie parzystościowe w $K^{(n)}$ można ująć algebraicznie jako
+działanie operatora różnicowego
+$\Delta_{p} f(d) = f(d) - f(d - p)$
+na funkcji wskaźnikowej $\mathbf{1}_{[0,\infty)}$:
+\[
+  K^{(n)} = \Delta_{p_1} \circ \cdots \circ \Delta_{p_n}\,
+             \mathbf{1}_{[0,\infty)}.
+\]
+W tym ujęciu $\pi_n(s)$ jest współczynnikiem maski operatorowej,
+a rzadkość $K^{(n)}$ odpowiada zerowym współczynnikom tej maski.
+Związek z funkcjami tworzącymi, algebrą operatorową
+i analizą harmoniczną na $\mathbb{Z}$ wyznacza kierunek
+dalszych badań.
+
+\input{appendix_PL}
+\clearpage
+\printbibliography
+
+\end{document}

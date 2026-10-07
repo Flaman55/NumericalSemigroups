@@ -1,0 +1,207 @@
+% ==================================================
+\appendix
+\section{Numerical verification}
+\label{sec:verification}
+% ==================================================
+
+\section*{A.1. Experimental conditions}
+\label{subsec:a1-conditions}
+
+Experiments were conducted in Python~3.14 (SymPy~1.14, NumPy)
+on a workstation AMD Ryzen~9~5900X (64\,GB, Windows~11~Pro)
+and a laptop Intel Core i7-13620H (16\,GB, Windows~11~Pro).
+Arithmetic: IEEE~754 double precision ($\varepsilon \approx 2{.}2 \times 10^{-16}$).
+
+Three implementations --- naive $O(N^2)$, prefix sums $O(N\log N)$,
+and sliding window $O(N)$ --- form a verification chain.
+Operation counts are deterministic functions of $(a, b)$.
+Cross-checking by direct enumeration $O(2^n)$
+at $n = 27, 28$ was performed multithreaded;
+all remaining integer values
+($w(n)$, operation counts, active positions)
+were bitwise identical on both platforms.
+All verification scripts are available at
+\url{https://github.com/Flaman55/RelMathApps/tree/main/number_theory/numerical_semigroups/linear_Q}:
+\texttt{verify\_linear\_Q.py} (Theorems~\ref{thm:linear}--\ref{thm:general},
+Tables~\ref{tab:two-gen}--\ref{tab:multi-gen}),
+\texttt{appendix\_verify.py} (Tables~\ref{tab:mertens}--\ref{tab:sequences}),
+\texttt{incremental\_windows.py} (incremental algorithm),
+and \texttt{section\_C\_parallel.py} (parallel enumeration, $n=19,\ldots,30$).
+
+\section*{A.2. Two generators}
+\label{subsec:a2-two}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rrrrrr}
+\toprule
+$a$ & $b$ & $N$ & ops.\ $O(N^2)$ & ops.\ $O(N)$ & max.\ error \\
+\midrule
+  3 &   5 &     4 &          16 &        16 & $5{.}3\times10^{-15}$ \\
+  5 &   7 &    12 &         144 &        48 & $1{.}8\times10^{-14}$ \\
+  7 &  11 &    31 &         961 &       124 & $1{.}1\times10^{-13}$ \\
+ 11 &  13 &    60 &        3600 &       240 & $2{.}8\times10^{-13}$ \\
+ 23 &  29 &   314 &       98596 &      1256 & $1{.}2\times10^{-11}$ \\
+ 37 &  41 &   721 &      519841 &      2884 & $4{.}3\times10^{-11}$ \\
+ 97 & 101 &  4801 &   23049601 &     19204 & $1{.}3\times10^{-9}$  \\
+\bottomrule
+\multicolumn{6}{l}{\footnotesize All 450 pairs $(a,b)$ with $b \leq 40$: \textbf{PASS}.
+  Tolerance $10^{-9}$ ($10^{-8}$ for $N > 500$).}
+\end{tabular}
+\caption{Verification of Theorem~\ref{thm:linear}: two generators.
+Operation ratio $N^2/(4N) = N/4$.}
+\label{tab:two-gen}
+\end{table}
+
+\section*{A.3. Multiple generators}
+\label{subsec:a3-multiple}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+Generators & $N$ & $w(n)$ & max.\ error & Status \\
+\midrule
+$\{2,3\}$     & 1 & 2 & $0$                   & OK \\
+$\{3,5\}$     & 4 & 2 & $8{.}9\times10^{-16}$ & OK \\
+$\{2,3,5\}$   & 1 & 4 & $0$                   & OK \\
+$\{3,5,7\}$   & 3 & 5 & $1{.}8\times10^{-15}$ & OK \\
+$\{2,3,5,7\}$ & 1 & 8 & $0$                   & OK \\
+\bottomrule
+\end{tabular}
+\caption{Verification of Theorem~\ref{thm:general}: multiple generators
+against naive $O(N^2)$.}
+\label{tab:multi-gen}
+\end{table}
+
+\newpage
+\section*{A.4. Density data (Theorem~\ref{thm:density})}
+\label{subsec:a4-density}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{r|rrrrr}
+\toprule
+$n$ & $2^n-1$ & $w(n)$ & $P(n)$ & Sparsity\% & $\delta(n)$ \\
+\midrule
+ 2 &          3 &    2 & 0{.}3333 &  0{.}0\% & $-0{.}3333$ \\
+ 3 &          7 &    4 & 0{.}2667 & 14{.}3\% & $-0{.}3048$ \\
+ 4 &         15 &    8 & 0{.}2286 & 26{.}7\% & $-0{.}3048$ \\
+ 5 &         31 &   14 & 0{.}2078 & 29{.}0\% & $-0{.}2438$ \\
+ 6 &         63 &   20 & 0{.}1918 & 44{.}4\% & $-0{.}1257$ \\
+ 7 &        127 &   30 & 0{.}1805 & 59{.}1\% & $-0{.}0557$ \\
+ 8 &        255 &   38 & 0{.}1710 & 72{.}2\% & $+0{.}0220$ \\
+ 9 &        511 &   48 & 0{.}1636 & 81{.}6\% & $+0{.}0697$ \\
+10 &       1023 &   60 & 0{.}1579 & 88{.}0\% & $+0{.}0993$ \\
+11 &       2047 &   84 & 0{.}1529 & 92{.}5\% & $+0{.}1118$ \\
+12 &       4095 &  116 & 0{.}1487 & 95{.}3\% & $+0{.}1204$ \\
+13 &       8191 &  146 & 0{.}1451 & 97{.}2\% & $+0{.}1273$ \\
+14 &      16383 &  198 & 0{.}1417 & 98{.}3\% & $+0{.}1296$ \\
+15 &      32767 &  236 & 0{.}1387 & 99{.}0\% & $+0{.}1315$ \\
+16 &      65535 &  288 & 0{.}1361 & 99{.}4\% & $\mathbf{+0{.}1317}$ \\
+17 &     131071 &  352 & 0{.}1338 & 99{.}7\% & $+0{.}1311$ \\
+18 &     262143 &  412 & 0{.}1316 & 99{.}8\% & $+0{.}1300$ \\
+19 &     524287 &  492 & 0{.}1296 & 99{.}9\% & $+0{.}1287$ \\
+20 &    1048575 &  564 & 0{.}1278 & 99{.}9\% & $+0{.}1273$ \\
+21 &    2097151 &  646 & 0{.}1260 &100{.}0\% & $+0{.}1257$ \\
+22 &    4194303 &  720 & 0{.}1245 &100{.}0\% & $+0{.}1243$ \\
+23 &    8388607 &  808 & 0{.}1230 &100{.}0\% & $+0{.}1229$ \\
+24 &   16777215 &  892 & 0{.}1216 &100{.}0\% & $+0{.}1215$ \\
+25 &   33554431 &  996 & 0{.}1203 &100{.}0\% & $+0{.}1203$ \\
+26 &   67108863 & 1096 & 0{.}1191 &100{.}0\% & $+0{.}1191$ \\
+27 &  134217727 & 1200 & 0{.}1180 &100{.}0\% & $+0{.}1180$ \\
+28 &  268435455 & 1306 & 0{.}1169 &100{.}0\% & $+0{.}1169$ \\
+29 &  536870911 & 1416 & 0{.}1158 &100{.}0\% & $+0{.}1158$ \\
+30 & 1073741823 & 1528 & 0{.}1148 &100{.}0\% & $+0{.}1148$ \\
+\bottomrule
+\end{tabular}
+\caption{Number of active windows $w(n)$, density product $P(n)$,
+sparsity $1 - w(n)/\sigma_n$,
+and density defect $\delta(n)$ (Theorem~\ref{thm:density})
+for $p_i = i$-th prime.
+Milestones: $n=8$ --- first $\delta(n) > 0$;
+$n=21$ --- sparsity reaches $100\%$ (after rounding);
+$n=25$ --- $w(n)/(2^n-1) < 10^{-4}$.
+Maximum of $\delta(n)$ at $n=16$ (bold).
+Values ``$100.0\%$'' result from rounding to one decimal place.
+Data $n \leq 18$: direct enumeration;
+$n = 19, \ldots, 30$: incremental algorithm,
+independently confirmed for $n=27,28$ by $O(2^n)$ enumeration.}
+\label{tab:mertens}
+\end{table}
+
+\newpage
+\section*{A.5. Values of $K^{(n)}(d)$ --- activation and deactivation}
+\label{subsec:a5-values}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{r|rrrrrrrrrrr}
+\toprule
+$d$ & $n{=}2$ & $n{=}3$ & $n{=}4$ & $n{=}5$ & $n{=}6$ &
+      $n{=}7$ & $n{=}8$ & $n{=}9$ & $n{=}10$ & $n{=}11$ & $n{=}12$ \\
+\midrule
+ 0 &  1 &  1 &  1 &  1 &  1 &  1 &  1 &  1 &  1 &  1 &  1 \\
+ 3 & -1 & -1 & -1 & -1 & -1 & -1 & -1 & -1 & -1 & -1 & -1 \\
+ 5 &  $\cdot$ & -1 & -1 & -1 & -1 & -1 & -1 & -1 & -1 & -1 & -1 \\
+ 7 &  $\cdot$ &  $\cdot$ & -1 & -1 & -1 & -1 & -1 & -1 & -1 & -1 & -1 \\
+ 8 &  $\cdot$ &  1 &  $\cdot$ &  $\cdot$ &  $\cdot$ &  $\cdot$ &  $\cdot$ &  $\cdot$ &  $\cdot$ &  $\cdot$ &  $\cdot$ \\
+ 9 &  $\cdot$ &  $\cdot$ &  1 &  1 &  1 &  1 &  1 &  1 &  1 &  1 &  1 \\
+10 &  $\cdot$ &  $\cdot$ &  1 &  1 &  1 &  1 &  1 &  1 &  1 &  1 &  1 \\
+16 &  $\cdot$ &  $\cdot$ &  $\cdot$ &  $\cdot$ &  1 &  1 &  1 &  1 &  1 &  1 &  1 \\
+17 &  $\cdot$ &  $\cdot$ &  $\cdot$ &  1 &  2 &  1 &  1 &  1 &  1 &  1 &  1 \\
+25 &  $\cdot$ &  $\cdot$ &  $\cdot$ &  $\cdot$ &  $\cdot$ &  $\cdot$ &  1 &  1 &  1 &  1 &  1 \\
+47 &  $\cdot$ &  $\cdot$ &  $\cdot$ &  $\cdot$ &  $\cdot$ &  1 &  1 &  $\cdot$ & -1 & -2 & -3 \\
+\bottomrule
+\end{tabular}
+\caption{Selected values of $K^{(n)}(d)$ for $n = 2, \ldots, 12$
+($p_i = i$-th prime). Dot ($\cdot$): $K^{(n)}(d) = 0$.
+Position $d = 8$: active at $n=3$, deactivated at $n=4$.
+Position $d = 17$: $K^{(6)}(17) = 2$.
+Position $d = 47$: $K^{(12)}(47) = -3$.
+The table provides empirical examples of values
+$|K^{(n)}(d)| = 2, 3$, motivating open problem~(i).
+The phenomenon of position activation and deactivation,
+empirically arising from parity cancellation
+among overlapping subset-sum representations,
+is the subject of open problem~(ii).}
+\label{tab:positions}
+\end{table}
+
+
+\section*{A.6. Verification of Conjecture~\ref{conj:harmonic}}
+\label{subsec:a6-conjecture}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Generator sequence & First gen. & $n^*$
+  & $\delta/P$, $n=25$ & $\delta/P$, $n=300$ \\
+\midrule
+\multicolumn{5}{l}{\textit{Prime sequences}} \\
+First $n$ primes             &    2 & 8 & 0{.}9998 & 1{.}0000 \\
+Primes from $101$            &  101 & 2 & 0{.}9999 & 1{.}0000 \\
+Primes from $1009$           & 1009 & 2 & 0{.}9997 & 1{.}0000 \\
+Every other prime ($p_2, p_4, \ldots$) &    3 & 8 & 0{.}9998 & 1{.}0000 \\
+Every third prime ($p_3, p_6, \ldots$) &  5 & 2 & 0{.}9998 & 1{.}0000 \\
+Smaller of twin prime pairs  &    3 & 9 & 0{.}9996 & 1{.}0000 \\
+Primes $\equiv 3 \pmod{4}$   &  3 & 8 & 0{.}9998 & 1{.}0000 \\
+Primes $\equiv 1 \pmod{4}$   &  5 & 2 & 0{.}9998 & 1{.}0000 \\
+\multicolumn{5}{l}{\textit{Random sequences (random odd integers)}} \\
+Same $H_n$ as baseline (seed 42)  & {---} & 8 & 0{.}9999 & {---} \\
+Same $H_n$ as baseline (seed 137) & {---} & 8 & 0{.}9999 & {---} \\
+Different $H_n$ (seed 42)         & {---} & 2 & 0{.}9999 & {---} \\
+\bottomrule
+\end{tabular}
+\caption{Data consistent with Theorem~\ref{thm:density}:
+$\delta(n)/P(n) \to 1$ for all tested sequences.
+At $n=300$: $\delta(n)/P(n) = 1{.}0000$ (six decimal places)
+for all prime sequences.
+Random sequences with the same $H_n$ as the baseline yield
+identical $n^*$, consistent with Conjecture~\ref{conj:harmonic}.}
+\label{tab:sequences}
+\end{table}
