@@ -1,5 +1,7 @@
-import Mathlib
-import LinearQ.Block1_KIntervals
+module
+
+public import Mathlib
+public import LinearQ.Block1_KIntervals
 
 /-!
 # Block 2: Quadratic form Q and its linear-time reduction (two generators)
@@ -12,25 +14,25 @@ for better simp_rw compatibility.
 namespace LinearQ
 
 /-- The quadratic form Q -/
-noncomputable def quadForm (a b : ℕ) (G : Finset ℤ) (n : ℤ → ℝ) : ℝ :=
+@[expose] public noncomputable def quadForm (a b : ℕ) (G : Finset ℤ) (n : ℤ → ℝ) : ℝ :=
   ∑ i ∈ G, ∑ j ∈ G, (kernelK a b (j - i) : ℝ) * n i * n j
 
 /-- Positive window: sum of n(j) for j in [k, k+a) ∩ G -/
-noncomputable def windowPos (a : ℕ) (G : Finset ℤ) (n : ℤ → ℝ) (k : ℤ) : ℝ :=
+@[expose] public noncomputable def windowPos (a : ℕ) (G : Finset ℤ) (n : ℤ → ℝ) (k : ℤ) : ℝ :=
   ∑ j ∈ G, if k ≤ j ∧ j < k + (a : ℤ) then n j else 0
 
 /-- Negative window: sum of n(j) for j in [k+b, k+a+b) ∩ G -/
-noncomputable def windowNeg (a b : ℕ) (G : Finset ℤ) (n : ℤ → ℝ) (k : ℤ) : ℝ :=
+@[expose] public noncomputable def windowNeg (a b : ℕ) (G : Finset ℤ) (n : ℤ → ℝ) (k : ℤ) : ℝ :=
   ∑ j ∈ G, if k + (b : ℤ) ≤ j ∧ j < k + (a : ℤ) + b then n j else 0
 
 /-- The linear form: Σ_k n(k) * (W⁺(k) - W⁻(k)) -/
-noncomputable def linearForm (a b : ℕ) (G : Finset ℤ) (n : ℤ → ℝ) : ℝ :=
+@[expose] public noncomputable def linearForm (a b : ℕ) (G : Finset ℤ) (n : ℤ → ℝ) : ℝ :=
   ∑ k ∈ G, n k * (windowPos a G n k - windowNeg a b G n k)
 
 /-! ## Key lemmas using kernelK_spec -/
 
 /-- K(j-i) = 1 iff i ≤ j < i+a -/
-lemma kernelK_eq_one_iff (a b : ℕ) (hab : a < b) (i j : ℤ) :
+public lemma kernelK_eq_one_iff (a b : ℕ) (hab : a < b) (i j : ℤ) :
     kernelK a b (j - i) = 1 ↔ i ≤ j ∧ j < i + (a : ℤ) := by
   have hlt : (a : ℤ) < b := Int.ofNat_lt.mpr hab
   rw [kernelK_spec a b hab]
@@ -39,7 +41,7 @@ lemma kernelK_eq_one_iff (a b : ℕ) (hab : a < b) (i j : ℤ) :
   · intro ⟨hi, hj⟩; split_ifs <;> omega
 
 /-- K(j-i) = -1 iff i+b ≤ j < i+a+b -/
-lemma kernelK_eq_neg_one_iff (a b : ℕ) (hab : a < b) (i j : ℤ) :
+public lemma kernelK_eq_neg_one_iff (a b : ℕ) (hab : a < b) (i j : ℤ) :
     kernelK a b (j - i) = -1 ↔ i + (b : ℤ) ≤ j ∧ j < i + (a : ℤ) + b := by
   have hlt : (a : ℤ) < b := Int.ofNat_lt.mpr hab
   rw [kernelK_spec a b hab]
@@ -48,7 +50,7 @@ lemma kernelK_eq_neg_one_iff (a b : ℕ) (hab : a < b) (i j : ℤ) :
   · intro ⟨hi, hj⟩; split_ifs <;> omega
 
 /-- Pointwise: K(j-i)*n(j) = pos_part - neg_part -/
-lemma kernelK_mul_eq (a b : ℕ) (hab : a < b) (i j : ℤ) (nj : ℝ) :
+public lemma kernelK_mul_eq (a b : ℕ) (hab : a < b) (i j : ℤ) (nj : ℝ) :
     (kernelK a b (j - i) : ℝ) * nj =
     (if i ≤ j ∧ j < i + (a : ℤ) then nj else 0) -
     (if i + (b : ℤ) ≤ j ∧ j < i + (a : ℤ) + b then nj else 0) := by
@@ -67,7 +69,7 @@ lemma kernelK_mul_eq (a b : ℕ) (hab : a < b) (i j : ℤ) (nj : ℝ) :
       simp [h1, h2, hk]
 
 /-- For fixed i: Σ_j K(j-i)*n(j) = W⁺(i) - W⁻(i) -/
-lemma inner_sum_eq_window_diff (a b : ℕ) (hab : a < b)
+public lemma inner_sum_eq_window_diff (a b : ℕ) (hab : a < b)
     (G : Finset ℤ) (n : ℤ → ℝ) (i : ℤ) :
     ∑ j ∈ G, (kernelK a b (j - i) : ℝ) * n j =
     windowPos a G n i - windowNeg a b G n i := by
@@ -77,7 +79,7 @@ lemma inner_sum_eq_window_diff (a b : ℕ) (hab : a < b)
   exact kernelK_mul_eq a b hab i j (n j)
 
 /-- Main theorem: Q(n) = linearForm(n) -/
-theorem quadForm_eq_linearForm (a b : ℕ) (hab : a < b)
+public theorem quadForm_eq_linearForm (a b : ℕ) (hab : a < b)
     (G : Finset ℤ) (n : ℤ → ℝ) :
     quadForm a b G n = linearForm a b G n := by
   simp only [quadForm, linearForm]

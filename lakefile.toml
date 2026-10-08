@@ -1,6 +1,6 @@
 name = "LinearQ"
 version = "0.1.0"
-defaultTargets = ["linearq"]
+defaultTargets = ["LinearQ", "Challenge", "Solution", "linearq"]
 
 [[require]]
 name = "mathlib"
@@ -9,6 +9,14 @@ rev = "v4.35.0-rc2"
 
 [[lean_lib]]
 name = "LinearQ"
+
+[[lean_lib]]
+name = "Challenge"
+roots = ["Challenge"]
+
+[[lean_lib]]
+name = "Solution"
+roots = ["Solution"]
 
 [[lean_exe]]
 name = "linearq"

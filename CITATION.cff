@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this formalization, please cite the accompanying paper and this repository."
+title: "NumericalSemigroups: a Lean 4 / Mathlib formalization of kernel windows and density asymptotics for Huang's quadratic form"
+abstract: >-
+  A machine-checked (zero-`sorry`) Lean 4 development of the structural results of
+  "A Linear Algorithm for Huang's Quadratic Form on Numerical Semigroups and Density
+  Asymptotics": the sliding-window form for two generators, the breakpoint decomposition of
+  the multi-generator quadratic form with the window bound w(n) <= sigma_n, and the density
+  asymptotics w(n)/(2^n - 1) = o(P(n)).
+type: software
+authors:
+  - family-names: Flamandzki
+    given-names: Artur
+    email: flamandzki.artur@gmail.com
+version: 0.1.0
+license: Apache-2.0
+repository-code: "https://github.com/Flaman55/NumericalSemigroups"
+keywords:
+  - Lean 4
+  - Mathlib
+  - numerical semigroups
+  - quadratic form
+  - inclusion-exclusion
+  - density asymptotics
+  - formal verification
+references:
+  - type: article
+    title: "A Linear Algorithm for Huang's Quadratic Form on Numerical Semigroups and Density Asymptotics"
+    authors:
+      - family-names: Flamandzki
+        given-names: Artur
+    url: "https://zenodo.org/records/20261427"

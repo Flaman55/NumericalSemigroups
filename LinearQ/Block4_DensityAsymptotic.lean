@@ -1,8 +1,11 @@
-import Mathlib
-import Mathlib.Analysis.SpecificLimits.Basic
-import LinearQ.Block1_KIntervals
-import LinearQ.Block2_QReduction
-import LinearQ.Block3_MultiGenerator
+module
+
+public import Mathlib
+public import Mathlib.Analysis.SpecificLimits.Basic
+public import LinearQ.Block1_KIntervals
+public import LinearQ.Block2_QReduction
+public import LinearQ.Block3_MultiGenerator
+public import LinearQ.Block3_Windows
 
 /-!
 # Block 4: Density asymptotic theorem (Theorem 5.2)
@@ -10,7 +13,7 @@ import LinearQ.Block3_MultiGenerator
 Goal: w(n) / (2^n - 1) = o(P(n)), equivalently δ(n)/P(n) → 1.
 
 Proof strategy (matching the paper):
-  Step 1: w(n) ≤ σ(n)              [Block 3: w_le_sigma]
+  Step 1: w(n) ≤ σ(n)              [Block 3b: activeWindowCount_le_sigma]
   Step 2: P(n) ≥ 1/(n+1)          [strict monotonicity → telescoping product]
   Step 3: σ(n)·(n+1)/(2^n-1) → 0  [subexponential growth: hsubexp]
   Step 4: squeeze                   [Steps 1–3]
@@ -32,7 +35,7 @@ open Filter Topology Real Finset Asymptotics
 /-- A strictly ordered generator sequence with subexponential growth.
     `hord` (StrictMono) is the canonical hypothesis: it implies injectivity
     and the lower bound p(k) ≥ k + 2 used in Step 2. -/
-structure GenSeq where
+public structure GenSeq where
   p : ℕ → ℕ
   hge     : ∀ k, 2 ≤ p k
   hord    : StrictMono p
@@ -43,7 +46,7 @@ variable (g : GenSeq)
 /-! ## Derived properties of GenSeq -/
 
 /-- Strict monotonicity implies injectivity. -/
-theorem GenSeq.injective : Function.Injective g.p :=
+public theorem GenSeq.injective : Function.Injective g.p :=
   g.hord.injective
 
 /-- Key lower bound: the k-th generator is at least k + 2.
@@ -59,36 +62,36 @@ private lemma p_ge_idx_add_two (k : ℕ) : k + 2 ≤ g.p k := by
 
 /-! ## Basic definitions -/
 
-def prefixList (n : ℕ) : List ℕ := (List.range n).map g.p
-def sigma (n : ℕ) : ℕ := (prefixList g n).sum
+@[expose] public def prefixList (n : ℕ) : List ℕ := (List.range n).map g.p
+@[expose] public def sigma (n : ℕ) : ℕ := (prefixList g n).sum
 
-noncomputable def mertensProd (n : ℕ) : ℝ :=
+@[expose] public noncomputable def mertensProd (n : ℕ) : ℝ :=
   ∏ k ∈ Finset.range n, (1 - 1 / (g.p k : ℝ))
 
-noncomputable def windowCount (n : ℕ) : ℕ :=
-  ((Finset.Ico (0 : ℤ) (sigma g n : ℤ)).filter
-    (fun d => kernelK_multi (prefixList g n) d ≠ 0)).card
+/-- `w(n)`: the number of active windows of `K^(n)`, i.e. intervals between consecutive
+breakpoints on which the kernel is nonzero (Block 3b). -/
+@[expose] public def windowCount (n : ℕ) : ℕ := activeWindowCount (prefixList g n)
 
 /-! ## Step 1: w(n) ≤ σ(n) -/
 
-theorem windowCount_le_sigma (n : ℕ) : windowCount g n ≤ sigma g n :=
-  w_le_sigma (prefixList g n)
+public theorem windowCount_le_sigma (n : ℕ) : windowCount g n ≤ sigma g n :=
+  activeWindowCount_le_sigma (prefixList g n)
 
 /-! ## Positivity of Mertens product -/
 
 private lemma one_div_le_half (k : ℕ) : 1 / (g.p k : ℝ) ≤ 1 / 2 :=
   one_div_le_one_div_of_le (by norm_num) (by exact_mod_cast g.hge k)
 
-theorem factor_ge_half (k : ℕ) : (1 / 2 : ℝ) ≤ 1 - 1 / (g.p k : ℝ) :=
+public theorem factor_ge_half (k : ℕ) : (1 / 2 : ℝ) ≤ 1 - 1 / (g.p k : ℝ) :=
   by linarith [one_div_le_half g k]
 
 private lemma factor_pos (k : ℕ) : 0 < 1 - 1 / (g.p k : ℝ) :=
   lt_of_lt_of_le (by norm_num) (factor_ge_half g k)
 
-theorem mertensProd_pos (n : ℕ) : 0 < mertensProd g n :=
+public theorem mertensProd_pos (n : ℕ) : 0 < mertensProd g n :=
   Finset.prod_pos (fun k _ => factor_pos g k)
 
-theorem mertensProd_ge_half_pow (n : ℕ) : (1 / 2 : ℝ) ^ n ≤ mertensProd g n := by
+public theorem mertensProd_ge_half_pow (n : ℕ) : (1 / 2 : ℝ) ^ n ≤ mertensProd g n := by
   simp only [mertensProd]
   calc (1 / 2 : ℝ) ^ n
       = ∏ _k ∈ Finset.range n, (1 / 2 : ℝ) := by
@@ -117,7 +120,7 @@ private lemma telescope_prod (n : ℕ) :
 /-- P(n) ≥ 1/(n+1): compare factor-by-factor with the telescoping product.
     The bound p(k) ≥ k+2 (derived from StrictMono + hge) gives 1/p(k) ≤ 1/(k+2),
     hence each factor 1 − 1/p(k) ≥ (k+1)/(k+2). -/
-theorem mertensProd_ge_one_div_succ (n : ℕ) :
+public theorem mertensProd_ge_one_div_succ (n : ℕ) :
     1 / ((n : ℝ) + 1) ≤ mertensProd g n := by
   rw [← telescope_prod n]
   simp only [mertensProd]
@@ -217,7 +220,7 @@ private lemma sigma_le_const_add_geom (g : GenSeq) :
     The key identity 1.5 · 0.75 / 2 = 9/16 · 2/9 · ... simplifies to
     f₁ · f₂ · f₃ = σ(n)·(n+1)/(2^n−1). The squeeze in f₁ works because
     (6/5)/(3/2) = 4/5 < 1, so σ(n)/(3/2)^n → 0. -/
-theorem sigma_succ_div_pow_tendsto :
+public theorem sigma_succ_div_pow_tendsto :
     Tendsto (fun n : ℕ => (sigma g n : ℝ) * ((n : ℝ) + 1) / ((2 : ℝ) ^ n - 1))
     atTop (nhds 0) := by
   -- 1. Auxiliary function definitions
@@ -338,7 +341,7 @@ theorem sigma_succ_div_pow_tendsto :
 
 /-! ## Step 4: density ratio → 0 -/
 
-theorem density_ratio_tendsto :
+public theorem density_ratio_tendsto :
     Tendsto (fun n : ℕ =>
       (windowCount g n : ℝ) / ((2 ^ n - 1) * mertensProd g n))
     atTop (nhds 0) := by
@@ -360,7 +363,7 @@ theorem density_ratio_tendsto :
       (sigma g n : ℝ) * ((n : ℝ) + 1) / ((2 : ℝ) ^ n - 1) := by
     intro n
     rcases Nat.eq_zero_or_pos n with rfl | hn
-    · simp [windowCount, sigma, prefixList]
+    · simp [windowCount, activeWindowCount, activeWindowStarts, sigma, prefixList]
     · have hMn  : 0 < mertensProd g n   := hM_pos n
       have hMlb : 1 / ((n : ℝ) + 1) ≤ mertensProd g n := hM_lb n
       have hn1  : (0 : ℝ) < (n : ℝ) + 1 := by positivity
@@ -394,7 +397,7 @@ theorem density_ratio_tendsto :
 
 /-- Main theorem (Theorem 5.2): the density defect ratio tends to 1.
     Equivalently: w(n)/(2^n-1) is asymptotically negligible relative to P(n). -/
-theorem gap_div_mertens_tendsto_one :
+public theorem gap_div_mertens_tendsto_one :
     Tendsto (fun n : ℕ =>
       (mertensProd g n - (windowCount g n : ℝ) / (2 ^ n - 1)) /
       mertensProd g n)
@@ -414,7 +417,7 @@ theorem gap_div_mertens_tendsto_one :
 
 /-- Formal Landau corollary: the window count density is little-o of the
     Mertens product. This is the standard asymptotic statement of Theorem 5.2. -/
-theorem windowCount_isLittleO_mertensProd :
+public theorem windowCount_isLittleO_mertensProd :
     (fun n : ℕ => (windowCount g n : ℝ) / ((2 : ℝ) ^ n - 1)) =o[atTop] (mertensProd g) := by
   apply isLittleO_of_tendsto
   · -- vacuous: P(n) > 0 always, so the antecedent P(n) = 0 never fires

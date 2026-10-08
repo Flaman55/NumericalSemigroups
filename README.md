@@ -1,11 +1,64 @@
-# linear_Q — Numerical Verification Scripts
+# NumericalSemigroups
 
-Verification and computation scripts accompanying the paper:
+Lean 4 / Mathlib formalization, numerical verification scripts and paper for:
 
-> **A Linear Algorithm for Huang's Quadratic Form on Numerical Semigroups and Density Asymptotics**  
+> **A Linear Algorithm for Huang's Quadratic Form on Numerical Semigroups and Density Asymptotics**
 > Artur Flamandzki, 2026
+> https://zenodo.org/records/20261427
 
----
+The quadratic form studied here is due to Yifeng Huang (arXiv:2604.13238). License: Apache-2.0.
+
+## Lean formalization
+
+Requires the toolchain `leanprover/lean4:v4.35.0-rc2` and Mathlib `v4.35.0-rc2`.
+
+```bash
+lake exe cache get
+lake build
+```
+
+### What is formalized
+
+For generators `p_1,...,p_n` the kernel `K^(n)(d)` is the inclusion-exclusion sum over
+sub-multisets `S` of `(-1)^|S| * 1[d >= sigma(S)]`. It is a step function whose jumps are
+`pi(s) = K(s) - K(s-1)`. An *active window* is an interval between consecutive breakpoints
+on which `K^(n)` is nonzero; the Lean development counts windows by their left endpoints.
+
+| Result | Lean declaration |
+|---|---|
+| Theorem 1.1 (two generators): `Q(n) = sum_k n_k (W+_k - W-_k)` | `LinearQ.quadForm_eq_linearForm` (Block 2) |
+| Recursive kernel equals the inclusion-exclusion kernel | `LinearQ.kernelK_multi_eq_inclExcl` (Block 3b) |
+| Theorem 1.2: `Q(n) = sum over breakpoints of pi(s) * T(s)`, at most `sigma + 1` breakpoints | `LinearQ.quadFormMulti_eq_breakpoint_sum`, `LinearQ.breakpointSet_card_le` (Block 5) |
+| Theorem 1.2: `w <= sigma` (pigeonhole) | `LinearQ.activeWindowCount_le_sigma` (Block 3b) |
+| Theorem 1.5: `w(n)/(2^n - 1) = o(P(n))`, equivalently `delta(n)/P(n) -> 1` | `LinearQ.windowCount_isLittleO_mertensProd`, `LinearQ.gap_div_mertens_tendsto_one` (Block 4) |
+
+The running-time claims of the paper (O(N), O(n sigma_n)), its numerical tables and its
+conjectures are not formalized. See `formalization.yaml` (`fidelity`) for the exact list of
+differences between the paper and the Lean statements, for example that Theorem 1.5 is stated
+for strictly increasing generators.
+
+### Layout
+
+| Path | Contents |
+|---|---|
+| `LinearQ/Block1_KIntervals.lean` | Two-generator kernel and its piecewise interval structure |
+| `LinearQ/Block2_QReduction.lean` | Quadratic form and sliding-window reduction (Theorem 1.1) |
+| `LinearQ/Block3_MultiGenerator.lean` | Recursive multi-generator kernel and support bounds |
+| `LinearQ/Block3_Windows.lean` | Inclusion-exclusion form, jumps, active windows, `w <= sigma` |
+| `LinearQ/Block4_DensityAsymptotic.lean` | Density asymptotics (Theorem 1.5) |
+| `LinearQ/Block5_Breakpoints.lean` | Breakpoint decomposition of the multi-generator quadratic form |
+| `Challenge.lean`, `Solution.lean`, `comparator.json` | Statement file, proofs and comparator configuration |
+
+### Production and review
+
+The original Lean files (Block 1 to Block 4) and the paper text were written by an AI agent
+(Claude Code) under the author's direction; Block 3b, Block 5, the port to Lean's module
+system, `Challenge.lean` and `Solution.lean` were written by an AI agent (Claude, in Claude
+Cowork) in an October 2026 session, with every build run by the author. The mathematics is the
+author's; Lean's kernel decides correctness. The author has not read the Lean source line by
+line, and independent verification would be valuable. Details are in `formalization.yaml`.
+
+## Numerical verification scripts (Python)
 
 ## Files
 

@@ -1,0 +1,260 @@
+version: "v0.4"
+
+license: "Apache-2.0"
+
+project:
+  name: "NumericalSemigroups: kernel windows and density asymptotics for Huang's quadratic form"
+  description: >
+    Lean 4 / Mathlib formalization of the structural results of "A Linear Algorithm for
+    Huang's Quadratic Form on Numerical Semigroups and Density Asymptotics" (Flamandzki,
+    2026). For generators p_1,...,p_n the generalised kernel K^(n)(d) is the
+    inclusion-exclusion sum over sub-multisets S of the generators of (-1)^|S| times the
+    indicator of d >= sigma(S), where sigma(S) is the sum of S. It is a step function whose
+    jumps are the parity function pi(s) = K(s) - K(s-1). The submission states and proves:
+    (1) for two generators a < b the quadratic form Q(n) = sum_{i,j in G} K(j-i) n_i n_j
+    equals the sliding-window form sum_k n_k (W+_k - W-_k); (2) for any nonempty generator
+    list, Q(n) is a sum over the breakpoints s of K of pi(s) times the tail pair-sum
+    T(s) = sum_{j-i >= s} n_i n_j, with at most sigma + 1 breakpoints, and the number w of
+    active windows (intervals between consecutive breakpoints on which K is nonzero) is at
+    most sigma; and (3) for strictly increasing generators p_k >= 2 with log p_n = o(n),
+    the density w(n)/(2^n - 1) is o(P(n)) where P(n) = prod (1 - 1/p_k), equivalently
+    delta(n)/P(n) tends to 1 for delta(n) = P(n) - w(n)/(2^n - 1). Items (1)-(3) are
+    Theorems 1.1, 1.2 (algebraic part) and 1.5 of the paper. The complexity claims of the
+    paper (running times of the algorithms) and its computational tables and conjectures are
+    not formalized. The window bound w <= sigma is a pigeonhole argument; the substance of
+    (2) is the exact breakpoint decomposition of Q and the identification of the
+    inclusion-exclusion kernel with its recursive form; the substance of (3) is the
+    asymptotic squeeze. Zero sorries; depends only on the three standard Lean axioms.
+  authors: ["Artur Flamandzki"]
+  license: "Apache-2.0"
+  responsible_maintainers: ["Artur Flamandzki"]
+  result_type: "original"
+  repository_role: >
+    Substantive development: this repository contains the complete, self-contained Lean
+    development together with the accompanying paper and its numerical verification scripts.
+
+classification:
+  arxiv: ["math.CO", "math.NT"]
+  msc2020: ["20M14", "11D07"]
+
+sources:
+  - title: "A Linear Algorithm for Huang's Quadratic Form on Numerical Semigroups and Density Asymptotics"
+    authors: ["Artur Flamandzki"]
+    id: "https://zenodo.org/records/20261427"
+    type: "original-proof"
+    license: "Apache-2.0"
+    author_endorsement: "n/a"
+    relationship: "other"
+    note: >
+      The accompanying manuscript (LaTeX sources and PDFs in `Latex/`) is the first
+      presentation of the results formalized here: the sliding-window form for two generators
+      (Theorem 1.1), the multi-generator kernel by inclusion-exclusion with its breakpoint
+      structure and window bound w(n) <= sigma_n (Theorem 1.2), and the density asymptotics
+      w(n)/(2^n - 1) = o(P(n)) (Theorem 1.5). Novelty has not been established by a
+      systematic literature search; it is unknown. The kernel itself is an inclusion-exclusion
+      over subsets, a classical device, and the window bound is elementary.
+  - title: "A quadratic form on the gap set of a numerical semigroup and the rational dinv statistic"
+    authors: ["Yifeng Huang"]
+    id: "arXiv:2604.13238"
+    type: "paper"
+    author_endorsement: "not-contacted"
+    relationship: "background"
+    note: >
+      Source of the two-generator quadratic form Q(n) = sum_{i,j in G} K(j-i) n_i n_j on the
+      gap set G of a numerical semigroup, and of the identity Q(1_D) = dinv(D) for Young
+      subdiagrams D. That identity is not formalized here. This work concerns the
+      computation of Q and the generalisation of the kernel to n generators.
+  - title: "The Diophantine Frobenius Problem"
+    authors: ["Jorge L. Ramirez Alfonsin"]
+    type: "book"
+    author_endorsement: "n/a"
+    relationship: "background"
+    note: >
+      Context only: the Frobenius problem for n >= 3 generators remains open and is not
+      addressed by this development.
+
+related_formalizations:
+  - id: "https://github.com/axiomprover/quadratic-dinv"
+    relationship: "other"
+    note: >
+      AxiomProver's Lean 4 formalization of Huang's Theorem 1.2 (Q(1_D) = dinv(D)). It is
+      independent of this work and concerns a different statement; nothing here imports or
+      builds on it.
+
+status:
+  scope: >
+    Six declarations are submitted for Comparator review (see comparator.json). All are
+    stated in Challenge.lean over definitions that are given there in full (no definition is
+    left unspecified) and proved in Solution.lean by wrappers around the development in
+    `LinearQ/`.
+
+    `Submission.quadForm_two_eq_linearForm2` (Theorem 1.1): for generators a < b and any
+    finite set G of integers and weights n : Z -> R, the quadratic form of the
+    inclusion-exclusion kernel of [a, b] equals sum_k n_k (W+_k - W-_k). The proof
+    (LinearQ.quadForm_eq_linearForm, Block2) is an exact piecewise description of the
+    two-generator kernel (Block1) followed by a regrouping of the double sum into window
+    sums.
+
+    `Submission.quadForm_eq_breakpoint_sum` and `Submission.breakpoints_card_le`
+    (Theorem 1.2): for a nonempty generator list the kernel equals the sum of its jumps, the
+    jumps vanish outside [0, sigma], and Q(n) = sum over breakpoints s of pi(s) * T(s)
+    (LinearQ.quadFormMulti_eq_breakpoint_sum, Block5). The recursive kernel used in the
+    proofs equals the inclusion-exclusion definition (LinearQ.kernelK_multi_eq_inclExcl,
+    Block3_Windows), which gives the parity recurrence pi_{p::ps}(s) = pi_ps(s) -
+    pi_ps(s-p) (LinearQ.kernelJump_cons).
+
+    `Submission.activeWindowCount_le_sigma` (Theorem 1.2): the number of active windows is
+    at most sigma. The proof is the pigeonhole argument that active windows start at distinct
+    integer points of [0, sigma).
+
+    `Submission.windowCount_isLittleO_mertensProd` and
+    `Submission.gap_div_mertensProd_tendsto_one` (Theorem 1.5): for strictly increasing
+    generators p_k >= 2 with log p_n / n -> 0 the density w(n)/(2^n - 1) is o(P(n)). The
+    proof (Block4) bounds w(n) <= sigma(n), proves P(n) >= 1/(n+1) by comparison with a
+    telescoping product, shows sigma(n) (n+1)/(2^n - 1) -> 0 from the subexponential growth
+    of the generators, and squeezes.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: ["propext", "Classical.choice", "Quot.sound"]
+  main_results:
+    - declaration: "Submission.quadForm_two_eq_linearForm2"
+      file: "Challenge.lean / Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "Submission.quadForm_eq_breakpoint_sum"
+      file: "Challenge.lean / Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "Submission.breakpoints_card_le"
+      file: "Challenge.lean / Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "Submission.activeWindowCount_le_sigma"
+      file: "Challenge.lean / Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "Submission.windowCount_isLittleO_mertensProd"
+      file: "Challenge.lean / Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+    - declaration: "Submission.gap_div_mertensProd_tendsto_one"
+      file: "Challenge.lean / Solution.lean"
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
+      comparator_config: "comparator.json"
+      literature_dependencies: []
+
+automation:
+  methods:
+    - method: "agent"
+      models: ["Claude (Anthropic); exact model version not recorded"]
+      framework: "Claude Code"
+      tool_setup: >
+        Agentic sessions in May 2026 produced the original Lean files (Block1 to Block4:
+        the two-generator kernel and its interval structure, the sliding-window reduction,
+        the multi-generator recursive kernel, and the density asymptotics) and the LaTeX
+        text of the paper. The author directed the mathematical content and reviewed the
+        structure and every successful Lean build; the agent wrote and edited the Lean
+        source and the paper prose.
+      cost:
+        wall_time: "not tracked"
+        spend_usd: "not tracked (subscription-based usage)"
+        hardware: "author's laptop"
+      prompting_notes: >
+        The mathematical content (the kernel K^(n), the window structure, the density
+        question and the statements of the theorems) is the author's. The agent translated
+        the specified statements into Lean tactics, repaired build failures and drafted the
+        paper text; it did not independently judge mathematical correctness, which is
+        decided by the Lean kernel.
+    - method: "agent"
+      models: ["claude-sonnet-5-5"]
+      framework: "Claude Cowork"
+      tool_setup: >
+        October 2026 session, directed by the author. The agent added `Block3_Windows.lean`
+        (identification of the recursive kernel with the paper's inclusion-exclusion
+        definition, breakpoints and active windows counted as intervals rather than integer
+        points) and `Block5_Breakpoints.lean` (breakpoint decomposition of the quadratic
+        form), ported all files to Lean's module system, wrote `Challenge.lean`,
+        `Solution.lean` and `comparator.json`, and updated the toolchain and Mathlib pin to
+        v4.35.0-rc2. The agent had no Lean toolchain in its sandbox: every build was run by
+        the author on their machine and its output returned to the agent, which corrected
+        the sources until the builds succeeded.
+      cost:
+        wall_time: "not tracked"
+        spend_usd: "not tracked (subscription-based usage)"
+        hardware: "author's computer"
+  spend_usd: "not tracked (subscription-based usage)"
+  notes: >
+    Mathematical design is the author's; Lean source and paper prose were written by agents
+    under the author's direction, with all builds run and checked by the author.
+
+fidelity:
+  divergences: >
+    The following differences between the paper and the Lean development are known.
+    (a) Theorem 1.5 in the paper assumes the generators are pairwise distinct integers
+    >= 2 with log p_n = o(n); the Lean statement assumes the stronger hypothesis that the
+    generator sequence is strictly increasing (and >= 2), which implies distinctness.
+    (b) The paper takes G to be the gap set N minus the semigroup generated by the
+    generators; the Lean statements hold for an arbitrary finite set G of integers and
+    arbitrary real weights, which includes that case. (c) The paper defines active windows
+    as intervals between consecutive breakpoints; the Lean development counts them by
+    their left endpoints, i.e. as breakpoints s in [0, sigma) at which the kernel jumps to a
+    nonzero value. (d) The generators are a list, and sub-multisets are taken with
+    multiplicity, which agrees with the paper's subsets for distinct generators. (e) The
+    running-time statements of Theorems 1.1 and 1.2 (O(N), O(n sigma_n)) are not formalized;
+    only the algebraic identities from which the algorithms are derived are. (f) The
+    paper's numerical tables, the empirical claim w(n) ~ sigma_n, and its conjectures are
+    not formalized. The paper's prose was drafted by an agent (see `automation`); this
+    note records content differences, not independent authorship of the text.
+
+review:
+  status: "self-assessed"
+  reviewers: ["Artur Flamandzki"]
+  notes: >
+    The author directed the mathematics and ran and checked every Lean build, but did not
+    independently read the agent-written Lean source line by line. Axiom-cleanliness of the
+    submitted declarations is checked by Comparator.
+
+alignment:
+  namespace: "LinearQ"
+  statements:
+    - source: "Theorem 1.1 (Linear algorithm, two generators)"
+      lean: "LinearQ.quadForm_eq_linearForm"
+      module: "LinearQ/Block2_QReduction.lean"
+      status: "proved"
+      note: "Algebraic identity only; the O(N) running-time claim is not formalized."
+    - source: "Theorem 1.2 (Sliding-window algorithm, n generators), decomposition"
+      lean: "LinearQ.quadFormMulti_eq_breakpoint_sum"
+      module: "LinearQ/Block5_Breakpoints.lean"
+      status: "proved"
+      note: "Exact breakpoint decomposition of Q; complexity claims are not formalized."
+    - source: "Lemma 4.1 (w(n) <= sigma_n)"
+      lean: "LinearQ.activeWindowCount_le_sigma"
+      module: "LinearQ/Block3_Windows.lean"
+      status: "proved"
+      note: "Windows counted by left endpoints; see fidelity (c)."
+    - source: "Theorem 1.5 (Density asymptotics)"
+      lean: "LinearQ.windowCount_isLittleO_mertensProd"
+      module: "LinearQ/Block4_DensityAsymptotic.lean"
+      status: "proved"
+      note: "Hypothesis strengthened to strictly increasing generators; see fidelity (a)."
+    - source: "Theorem 1.5 (equivalent form delta(n)/P(n) -> 1)"
+      lean: "LinearQ.gap_div_mertens_tendsto_one"
+      module: "LinearQ/Block4_DensityAsymptotic.lean"
+      status: "proved"
+      note: "Same hypotheses as the previous entry."
+
+acknowledgements: >
+  The quadratic form studied here is due to Yifeng Huang (arXiv:2604.13238). An independent
+  Lean 4 formalization of Huang's Theorem 1.2 by AxiomProver is a separate project and is not
+  used here.

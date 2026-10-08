@@ -1,0 +1,15 @@
+{
+  "challenge_module": "Challenge",
+  "solution_module": "Solution",
+  "theorem_names": [
+    "Submission.quadForm_two_eq_linearForm2",
+    "Submission.quadForm_eq_breakpoint_sum",
+    "Submission.breakpoints_card_le",
+    "Submission.activeWindowCount_le_sigma",
+    "Submission.windowCount_isLittleO_mertensProd",
+    "Submission.gap_div_mertensProd_tendsto_one"
+  ],
+  "definition_names": [],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "enable_nanoda": true
+}

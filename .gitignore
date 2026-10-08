@@ -1,6 +1,6 @@
 # Lake / Lean build artifacts
-/lean/.lake/
-/lean/build.log
+/.lake/
+/build.log
 *.olean
 *.ilean
 *.trace
@@ -28,3 +28,15 @@ Latex/*.fdb_latexmk
 .vscode/
 .idea/
 *.code-workspace
+
+# Palomar local preflight: cloned toolchains, build artifacts, run reports and logs.
+# Never commit; regenerated per machine by scripts/palomar_preflight.sh.
+/.cache/
+/.venv-editorial/
+
+# Palomar local preflight: PalomarPolicy prompts/rubric/schema (+ its pin file),
+# re-synced on every non-mechanical-only run. Not part of the submission itself.
+/vendor/
+
+# Local secret read by the editorial audit. Never commit.
+/tokens_ssto.yaml
